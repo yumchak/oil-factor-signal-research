@@ -1,58 +1,35 @@
-# oil-factor-signal-research
+# Oil Factor Signal Research
 
-Oil Factor Signal Research
+Analysis of whether a proprietary factor ("Factor A") predicts crude oil returns,
+and how best to trade it with long / short / neutral positions.
 
-Research into whether a proprietary factor ("Factor A") carries predictive
-information about crude oil returns, and how best to convert it into a
-long / short / neutral trading signal.
+## Finding
 
-Objective
+The factor carries genuine but **decaying** predictive information.
 
-Given a daily factor series and daily oil prices over roughly ten years
-(July 2016 to July 2026), the goal is to identify the best way to use the
-factor to trade oil, and to judge honestly whether the signal is real or
-whether it is an artefact of overfitting.
+| Period | Sharpe | Oil (passive) |
+|---|---|---|
+| Train 2016–20 | 1.36 | 0.28 |
+| Validation 2021–23 | 0.23 | 0.53 |
+| **Test 2024–26** (untouched) | **0.32** | 0.16 |
 
-Data
+Strong through 2020, deteriorated sharply in early 2021, now a weak residual.
+**Not deployable standalone** — but uncorrelated with oil (ρ = −0.04), so it may
+have value as one component of a multi-signal book.
 
-data/20260705_oil_price_factor.xlsx — 2,521 daily observations.
+## Strategy
 
-ColumnDescriptionDateTrading datefactor AProprietary factor level (cumulative, index-like, ~100 in 2016 rising to ~820 in 2026)daily returnDaily return of Factor Aoil priceCrude oil pricedaily return.1Daily return of the oil price
+- **Signal:** factor's 5-day momentum, standardised by a 60-day rolling z-score
+- **Positions:** long if z > +0.25, short if z < −0.25, otherwise flat
+- **Sizing:** scaled to a 10% annualised volatility target
+- **Costs:** 5 bps per unit traded, ~25× annual turnover
 
-Notes on the data: the file is ordered newest-first, so it is sorted
-ascending before analysis. Factor A is a growing, non-stationary level
-series, so signals are built on rolling, standardised transformations of
-the factor rather than on its raw level.
+## Method
 
-Approach
+Rank IC screening at 1/5/20-day horizons established that the factor's *momentum*
+predicts oil (IC +0.065, p = 0.001) while its *level* does not — the level's apparent
+signal was directional bias, not forecasting content.
 
-
-Predictive power. Measure the factor's information coefficient (IC)
-against forward oil returns at 1, 5 and 20 day horizons, with
-significance testing, to establish whether the factor predicts oil
-returns at all and at which horizon it is strongest.
-Signal construction. Convert the factor into long / short / neutral
-positions using rolling standardisation (z-score) and rolling quantile
-rules, so the signal adapts to changing factor levels over time.
-Validation. Split the sample into training, validation and a fully
-held-out test period. Approaches are compared on the validation set;
-the final choice is evaluated once on the untouched test set to avoid
-overfitting.
-Evaluation. Strategies are judged on out-of-sample annualised Sharpe
-ratio, maximum drawdown and consistency between in-sample and
-out-of-sample performance, with transaction costs included. Hit rate is
-reported for context only.
-Regime analysis. Performance is broken down by volatility regime to
-test whether the signal is robust across market conditions or dependent
-on a single environment.
-
-
-Repository structure
-
-oil-factor-signal-research/
-├── data/
-│   └── 20260705_oil_price_factor.xlsx
-├── notebooks/
-│   └── oil_factor_signal_research.ipynb
-├── README.md
-└── requirements.txt
+Parameters were selected on a validation set and the test period evaluated once.
+The threshold was chosen for **stability** rather than peak performance; the rejected
+peak subsequently returned −0.09 out of sample while the stable choice held at +0.32.
